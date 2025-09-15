@@ -6,7 +6,7 @@ public class Purchase
 
     // References
     public Guid VehicleId { get; set; }
-    public Guid CustomerId { get; set; }
+    public Guid UserId { get; set; }
 
     // Sale details
     public decimal SalePrice { get; set; }

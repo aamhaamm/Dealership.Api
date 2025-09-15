@@ -44,7 +44,7 @@ public class PurchasesController : ControllerBase
         {
             Id = Guid.NewGuid(),
             VehicleId = vehicle.Id,
-            CustomerId = user.Id,
+            UserId = user.Id,            
             SalePrice = vehicle.Price,
             PurchasedAt = DateTime.UtcNow
         };
@@ -65,7 +65,7 @@ public class PurchasesController : ControllerBase
         if (user is null) return Enumerable.Empty<PurchaseResponse>();
 
         var purchases = await _db.Purchases
-            .Where(p => p.CustomerId == user.Id)
+            .Where(p => p.UserId == user.Id)  
             .OrderByDescending(p => p.PurchasedAt)
             .ToListAsync();
 
