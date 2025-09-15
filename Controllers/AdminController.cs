@@ -11,10 +11,12 @@ namespace Dealership.Api.Controllers;
 public class AdminController : ControllerBase
 {
     private readonly AppDbContext _db;
+    private readonly ILogger<AdminController> _logger;
 
-    public AdminController(AppDbContext db)
+    public AdminController(AppDbContext db, ILogger<AdminController> logger)
     {
         _db = db;
+        _logger = logger;
     }
 
     [HttpGet("customers")]
@@ -38,13 +40,15 @@ public class AdminController : ControllerBase
     {
         var purchase = await _db.Purchases.FirstOrDefaultAsync(p => p.Id == purchaseId);
         if (purchase == null)
-            return NotFound(new { message = "Purchase not found" });
+            return NotFound(new { code = "PURCHASE_NOT_FOUND", message = "Purchase not found" });
 
         if (purchase.Status != "Pending")
-            return BadRequest(new { message = "Purchase already processed" });
+            return BadRequest(new { code = "ALREADY_PROCESSED", message = "Purchase already processed" });
 
         purchase.Status = approve ? "Approved" : "Declined";
         await _db.SaveChangesAsync();
+
+        _logger.LogInformation("Purchase {PurchaseId} processed: {Status}", purchase.Id, purchase.Status);
 
         return Ok(new
         {

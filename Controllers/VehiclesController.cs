@@ -2,6 +2,7 @@ using Dealership.Api.Data;
 using Dealership.Api.Dtos;
 using Dealership.Api.Models;
 using Dealership.Api.Services;
+using Dealership.Api.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,14 +15,15 @@ public class VehiclesController : ControllerBase
 {
     private readonly AppDbContext _db;
     private readonly IOtpService _otp;
+    private readonly ILogger<VehiclesController> _logger;
 
-    public VehiclesController(AppDbContext db, IOtpService otp)
+    public VehiclesController(AppDbContext db, IOtpService otp, ILogger<VehiclesController> logger)
     {
         _db = db;
         _otp = otp;
+        _logger = logger;
     }
 
-    // Browse vehicles (Customer)
     [HttpGet("browse")]
     [Authorize(Policy = "CustomerOnly")]
     public async Task<IEnumerable<VehicleResponse>> Browse()
@@ -32,20 +34,16 @@ public class VehiclesController : ControllerBase
         ));
     }
 
-    // Get vehicle details (Any logged-in user)
     [HttpGet("{id}")]
     [Authorize]
     public async Task<ActionResult<VehicleResponse>> GetById(Guid id)
     {
         var v = await _db.Vehicles.FindAsync(id);
-        if (v is null) return NotFound();
+        if (v is null) return NotFound(new { code = "VEHICLE_NOT_FOUND", message = "Vehicle not found" });
 
-        return new VehicleResponse(
-            v.Id, v.Make, v.Model, v.Year, v.Price, v.Color, v.MileageKm, v.IsAvailable
-        );
+        return new VehicleResponse(v.Id, v.Make, v.Model, v.Year, v.Price, v.Color, v.MileageKm, v.IsAvailable);
     }
 
-    // Add vehicle (Admin only)
     [HttpPost("add")]
     [Authorize(Policy = "AdminOnly")]
     public async Task<ActionResult<VehicleResponse>> Add([FromBody] VehicleCreateRequest req)
@@ -66,23 +64,21 @@ public class VehiclesController : ControllerBase
         _db.Vehicles.Add(vehicle);
         await _db.SaveChangesAsync();
 
-        return new VehicleResponse(
-            vehicle.Id, vehicle.Make, vehicle.Model, vehicle.Year,
-            vehicle.Price, vehicle.Color, vehicle.MileageKm, vehicle.IsAvailable
-        );
+        _logger.LogInformation("Vehicle added: {Make} {Model} ({Year})", vehicle.Make, vehicle.Model, vehicle.Year);
+
+        return new VehicleResponse(vehicle.Id, vehicle.Make, vehicle.Model, vehicle.Year,
+                                   vehicle.Price, vehicle.Color, vehicle.MileageKm, vehicle.IsAvailable);
     }
 
-    // Update vehicle (Admin + OTP required)
     [HttpPut("update")]
     [Authorize(Policy = "AdminOnly")]
     public async Task<IActionResult> Update([FromBody] VehicleUpdateRequest req)
     {
-        // OTP validation
-        var valid = await _otp.ValidateAsync(Guid.Parse(req.OtpId), req.Code, "updateVehicle", User.Identity!.Name!);
-        if (!valid) return BadRequest(new { message = "Invalid or expired OTP" });
+        var valid = await _otp.ValidateAsync(Guid.Parse(req.OtpId), req.Code, OtpPurposes.UpdateVehicle, User.Identity!.Name!);
+        if (!valid) return BadRequest(new { code = "OTP_INVALID", message = "Invalid or expired OTP" });
 
         var v = await _db.Vehicles.FindAsync(req.Id);
-        if (v is null) return NotFound();
+        if (v is null) return NotFound(new { code = "VEHICLE_NOT_FOUND", message = "Vehicle not found" });
 
         v.Make = req.Make;
         v.Model = req.Model;
@@ -92,9 +88,8 @@ public class VehiclesController : ControllerBase
         v.MileageKm = req.MileageKm;
 
         await _db.SaveChangesAsync();
+        _logger.LogInformation("Vehicle updated: {Id}", v.Id);
 
-        return Ok(new VehicleResponse(
-            v.Id, v.Make, v.Model, v.Year, v.Price, v.Color, v.MileageKm, v.IsAvailable
-        ));
+        return Ok(new VehicleResponse(v.Id, v.Make, v.Model, v.Year, v.Price, v.Color, v.MileageKm, v.IsAvailable));
     }
 }

@@ -1,6 +1,7 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Dealership.Api.Dtos;
 
-// For browsing vehicles
 public record VehicleResponse(
     Guid Id,
     string Make,
@@ -12,25 +13,23 @@ public record VehicleResponse(
     bool IsAvailable
 );
 
-// For adding a new vehicle
 public record VehicleCreateRequest(
-    string Make,
-    string Model,
-    int Year,
-    decimal Price,
-    string Color,
-    int MileageKm
+    [Required] string Make,
+    [Required] string Model,
+    [Range(1900, 2100)] int Year,
+    [Range(1, double.MaxValue)] decimal Price,
+    [Required] string Color,
+    [Range(0, int.MaxValue)] int MileageKm
 );
 
-// For updating vehicle (OTP protected)
 public record VehicleUpdateRequest(
-    Guid Id,
-    string Make,
-    string Model,
-    int Year,
-    decimal Price,
-    string Color,
-    int MileageKm,
-    string OtpId,
-    string Code
+    [Required] Guid Id,
+    [Required] string Make,
+    [Required] string Model,
+    [Range(1900, 2100)] int Year,
+    [Range(1, double.MaxValue)] decimal Price,
+    [Required] string Color,
+    [Range(0, int.MaxValue)] int MileageKm,
+    [Required] string OtpId,
+    [Required] string Code
 );

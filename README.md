@@ -1,6 +1,6 @@
 # Car Dealership API
 
-A simple dealership management system built with **.NET 9 Web API**, using **Entity Framework Core (SQLite)**, **JWT Authentication**, and **OTP-based security**.
+A dealership management system built with **.NET 9 Web API**, using **Entity Framework Core (SQLite)**, **JWT Authentication**, and **OTP-based security**.
 
 ---
 
@@ -8,65 +8,85 @@ A simple dealership management system built with **.NET 9 Web API**, using **Ent
 
 1. Clone the repo or extract the project.
 2. Make sure you have **.NET 9 SDK** installed.
-3. Set up `appsettings.json` (already has default SQLite + JWT config).
+3. Update `appsettings.json` if needed (default SQLite + JWT config works).
 4. From the project root, run:
    ```bash
    dotnet restore
    dotnet build
    dotnet run
    ```
-5. The API will be available at:
-   - Swagger UI → `http://localhost:5118/swagger/index.html`
+5. Open Swagger UI:
+   - `http://localhost:5118/swagger/index.html`
 
 ---
 
-## Available Endpoints
+## Default Credentials
+
+- **Admin**
+  - Email: `admin@demo.local`
+  - Password: `P@ssw0rd!`
+
+---
+
+## API Endpoints
 
 ### Authentication
 
-- `POST /api/Auth/request-otp` → Request OTP (register/login).
-- `POST /api/Auth/register` → Register new customer (OTP required).
-- `POST /api/Auth/login` → Login (OTP required, returns JWT).
+- `POST /api/Auth/request-otp` → Request OTP (register/login)
+- `POST /api/Auth/register` → Register new customer (OTP required)
+- `POST /api/Auth/login` → Login (OTP required, returns JWT)
 
-### Admin Use Cases
+### Admin
 
-- `POST /api/Vehicles/add` → Add new vehicle (Admin only).
-- `PUT /api/Vehicles/update` → Update vehicle details (Admin + OTP).
-- `GET /api/Admin/customers` → List all registered customers (Admin only).
+- `POST /api/Vehicles/add` → Add vehicle
+- `PUT /api/Vehicles/update` → Update vehicle (OTP required)
+- `GET /api/Admin/customers` → List all customers
+- `POST /api/Admin/process-sale/{purchaseId}?approve=true|false` → Approve/Decline purchase
 
-### Customer Use Cases
+### Customer
 
-- `GET /api/Vehicles/browse` → Browse available vehicles.
-- `GET /api/Vehicles/{id}` → View vehicle details.
-- `POST /api/Purchases/request` → Purchase a vehicle (Customer + OTP).
-- `GET /api/Purchases/history` → View purchase history.
+- `GET /api/Vehicles/browse` → Browse available vehicles
+- `GET /api/Vehicles/{id}` → Vehicle details
+- `POST /api/Purchases/request` → Request purchase (OTP required)
+- `GET /api/Purchases/history` → View purchase history
 
 ---
 
-## Assumptions & Design Decisions
+## Assumptions & Design
 
-- **OTP Simulation**: OTPs are printed in the console instead of sending SMS/Email.
-- **Roles**:
-  - Admin → seeded by default in the database (`admin@demo.local` / `P@ssw0rd!`).
-  - Customer → created on registration.
-- **Database**: SQLite used for simplicity, auto-created & seeded on first run.
+- **OTP**: Console-based simulation (printed when generated).
+- **Roles**: Admin is seeded; Customers created via register.
 - **Security**:
-  - JWT authentication with role-based authorization.
-  - OTP required for critical actions (Register, Login, Purchase, Update Vehicle).
-- **Structure**:
-  - Controllers → handle API requests.
-  - DTOs → clean request/response models.
-  - Services → encapsulate business logic (JWT, OTP).
-  - EF Core → data access & persistence.
+  - JWT with role-based authorization.
+  - OTP required for critical actions: Register, Login, Purchase, Update Vehicle.
+- **Architecture**:
+  - **Controllers** → API endpoints.
+  - **Services** → JWT & OTP logic.
+  - **DTOs** → Request/response contracts.
+  - **EF Core** → Data persistence with SQLite.
+
+---
+
+## ✨ Bonus Features
+
+- ✅ Swagger/OpenAPI with JWT support
+- ✅ Logging with `ILogger<T>`
+- ✅ Input validation using DataAnnotations
+- ✅ Configuration via `appsettings.json`
+- 🐳 Docker-ready (`Dockerfile` included)
 
 ---
 
 ## Example Flow
 
-1. `POST /api/Auth/request-otp` (register).
-2. `POST /api/Auth/register` → creates new Customer.
-3. Login with OTP → receive JWT.
-4. Browse vehicles → `GET /api/Vehicles/browse`.
-5. Request OTP for purchase → `POST /api/Otp/request`.
-6. Complete purchase → `POST /api/Purchases/request`.
-7. Check purchase history → `GET /api/Purchases/history`.
+1. Request OTP for registration → `POST /api/Auth/request-otp`
+2. Register → `POST /api/Auth/register`
+3. Request OTP for login → `POST /api/Auth/request-otp`
+4. Login → `POST /api/Auth/login`
+5. Use JWT token in Swagger (Authorize button)
+6. Browse cars → `GET /api/Vehicles/browse`
+7. Request OTP for purchase → `POST /api/Otp/request`
+8. Submit purchase → `POST /api/Purchases/request`
+9. Admin processes purchase → `POST /api/Admin/process-sale/{id}`
+
+---
