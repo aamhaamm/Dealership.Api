@@ -11,4 +11,5 @@ public class Purchase
     // Sale details
     public decimal SalePrice { get; set; }
     public DateTime PurchasedAt { get; set; } = DateTime.UtcNow;
+    public string Status { get; set; } = "Pending"; 
 }

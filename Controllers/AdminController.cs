@@ -18,7 +18,6 @@ public class AdminController : ControllerBase
         _db = db;
     }
 
-    // View all customers
     [HttpGet("customers")]
     public async Task<IActionResult> GetAllCustomers()
     {
@@ -33,5 +32,27 @@ public class AdminController : ControllerBase
             .ToListAsync();
 
         return Ok(customers);
+    }
+
+    [HttpPost("process-sale/{purchaseId}")]
+    public async Task<IActionResult> ProcessSale(Guid purchaseId, [FromQuery] bool approve)
+    {
+        var purchase = await _db.Purchases.FirstOrDefaultAsync(p => p.Id == purchaseId);
+        if (purchase == null)
+            return NotFound(new { message = "Purchase not found" });
+
+        if (purchase.Status != "Pending")
+            return BadRequest(new { message = "Purchase already processed" });
+
+        purchase.Status = approve ? "Approved" : "Declined";
+        await _db.SaveChangesAsync();
+
+        return Ok(new
+        {
+            purchase.Id,
+            purchase.UserId,
+            purchase.VehicleId,
+            purchase.Status
+        });
     }
 }
