@@ -97,3 +97,10 @@ A dealership management system built with **.NET 9 Web API**, using **Entity Fra
 7. Request OTP for purchase → `POST /api/Otp/request`
 8. Submit purchase → `POST /api/Purchases/request`
 9. Admin processes purchase → `POST /api/Admin/process-sale/{id}`
+
+---
+
+## Testing Scenarios
+
+For detailed step-by-step test scenarios, see:  
+📄 [TestScenarios.pdf](./TestScenarios.pdf)
