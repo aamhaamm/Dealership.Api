@@ -19,6 +19,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // JWT Service
 builder.Services.AddScoped<IJwtService, JwtService>();
 
+// OTP Service
+builder.Services.AddScoped<IOtpService, OtpService>();
+
 // JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"]!;
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

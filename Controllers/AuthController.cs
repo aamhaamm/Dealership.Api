@@ -1,4 +1,5 @@
 using Dealership.Api.Data;
+using Dealership.Api.Dtos;
 using Dealership.Api.Models;
 using Dealership.Api.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -12,26 +13,38 @@ public class AuthController : ControllerBase
 {
     private readonly AppDbContext _db;
     private readonly IJwtService _jwt;
+    private readonly IOtpService _otp;
 
-    public AuthController(AppDbContext db, IJwtService jwt)
+    public AuthController(AppDbContext db, IJwtService jwt, IOtpService otp)
     {
         _db = db;
         _jwt = jwt;
+        _otp = otp;
     }
 
-    // Register new customer
-    [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] User request)
+    // Step 1: Request OTP (for register or login)
+    [HttpPost("request-otp")]
+    public async Task<IActionResult> RequestOtp([FromBody] OtpRequest req)
     {
-        // Check if email already exists
-        if (await _db.Users.AnyAsync(u => u.Email == request.Email.ToLower()))
+        var token = await _otp.GenerateAsync(req.Purpose, req.Identifier, TimeSpan.FromMinutes(5));
+        return Ok(new { OtpId = token.Id, ExpiresAtUtc = token.ExpiresAtUtc });
+    }
+
+    // Step 2: Register new customer (OTP required)
+    [HttpPost("register")]
+    public async Task<ActionResult<AuthResponse>> Register([FromBody] RegisterWithOtpRequest req)
+    {
+        var valid = await _otp.ValidateAsync(Guid.Parse(req.OtpId), req.Code, "register", req.Email);
+        if (!valid) return BadRequest(new { message = "Invalid or expired OTP" });
+
+        if (await _db.Users.AnyAsync(u => u.Email == req.Email.ToLower()))
             return Conflict(new { message = "Email already registered" });
 
         var user = new User
         {
             Id = Guid.NewGuid(),
-            Email = request.Email.ToLower(),
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.PasswordHash),
+            Email = req.Email.ToLower(),
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.Password),
             Role = "Customer"
         };
 
@@ -39,18 +52,23 @@ public class AuthController : ControllerBase
         await _db.SaveChangesAsync();
 
         var token = _jwt.CreateToken(user);
-        return Ok(new { token, role = user.Role, email = user.Email });
+        return new AuthResponse(token, user.Role, user.Email);
     }
 
-    // Login existing user
+    // Step 3: Login existing user (OTP required)
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] User request)
+    public async Task<ActionResult<AuthResponse>> Login([FromBody] LoginWithOtpRequest req)
     {
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == request.Email.ToLower());
-        if (user is null || !BCrypt.Net.BCrypt.Verify(request.PasswordHash, user.PasswordHash))
+        var valid = await _otp.ValidateAsync(Guid.Parse(req.OtpId), req.Code, "login", req.Email);
+        if (!valid) return BadRequest(new { message = "Invalid or expired OTP" });
+
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == req.Email.ToLower());
+        if (user is null) return Unauthorized(new { message = "User not found" });
+
+        if (!BCrypt.Net.BCrypt.Verify(req.Password, user.PasswordHash))
             return Unauthorized(new { message = "Invalid credentials" });
 
         var token = _jwt.CreateToken(user);
-        return Ok(new { token, role = user.Role, email = user.Email });
+        return new AuthResponse(token, user.Role, user.Email);
     }
 }
