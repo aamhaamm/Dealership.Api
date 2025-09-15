@@ -21,24 +21,28 @@ public class VehiclesController : ControllerBase
         _otp = otp;
     }
 
-    // Browse vehicles (any customer)
+    // Browse vehicles (Customer)
     [HttpGet("browse")]
     [Authorize(Policy = "CustomerOnly")]
     public async Task<IEnumerable<VehicleResponse>> Browse()
     {
         var vehicles = await _db.Vehicles.Where(v => v.IsAvailable).ToListAsync();
-        return vehicles.Select(v => new VehicleResponse(v.Id, v.Make, v.Model, v.Year, v.Price, v.Color, v.MileageKm, v.IsAvailable));
+        return vehicles.Select(v => new VehicleResponse(
+            v.Id, v.Make, v.Model, v.Year, v.Price, v.Color, v.MileageKm, v.IsAvailable
+        ));
     }
 
-    // Get vehicle details
+    // Get vehicle details (Any logged-in user)
     [HttpGet("{id}")]
-    [Authorize] // Any logged-in user
+    [Authorize]
     public async Task<ActionResult<VehicleResponse>> GetById(Guid id)
     {
         var v = await _db.Vehicles.FindAsync(id);
         if (v is null) return NotFound();
 
-        return new VehicleResponse(v.Id, v.Make, v.Model, v.Year, v.Price, v.Color, v.MileageKm, v.IsAvailable);
+        return new VehicleResponse(
+            v.Id, v.Make, v.Model, v.Year, v.Price, v.Color, v.MileageKm, v.IsAvailable
+        );
     }
 
     // Add vehicle (Admin only)
@@ -62,7 +66,10 @@ public class VehiclesController : ControllerBase
         _db.Vehicles.Add(vehicle);
         await _db.SaveChangesAsync();
 
-        return new VehicleResponse(vehicle.Id, vehicle.Make, vehicle.Model, vehicle.Year, vehicle.Price, vehicle.Color, vehicle.MileageKm, vehicle.IsAvailable);
+        return new VehicleResponse(
+            vehicle.Id, vehicle.Make, vehicle.Model, vehicle.Year,
+            vehicle.Price, vehicle.Color, vehicle.MileageKm, vehicle.IsAvailable
+        );
     }
 
     // Update vehicle (Admin + OTP required)
@@ -70,6 +77,7 @@ public class VehiclesController : ControllerBase
     [Authorize(Policy = "AdminOnly")]
     public async Task<IActionResult> Update([FromBody] VehicleUpdateRequest req)
     {
+        // OTP validation
         var valid = await _otp.ValidateAsync(Guid.Parse(req.OtpId), req.Code, "updateVehicle", User.Identity!.Name!);
         if (!valid) return BadRequest(new { message = "Invalid or expired OTP" });
 
@@ -84,6 +92,9 @@ public class VehiclesController : ControllerBase
         v.MileageKm = req.MileageKm;
 
         await _db.SaveChangesAsync();
-        return Ok(new VehicleResponse(v.Id, v.Make, v.Model, v.Year, v.Price, v.Color, v.MileageKm, v.IsAvailable));
+
+        return Ok(new VehicleResponse(
+            v.Id, v.Make, v.Model, v.Year, v.Price, v.Color, v.MileageKm, v.IsAvailable
+        ));
     }
 }
