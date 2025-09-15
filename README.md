@@ -52,6 +52,14 @@ A dealership management system built with **.NET 9 Web API**, using **Entity Fra
 
 ---
 
+## Validation Rules
+
+- **Password**: Minimum 8 chars, must include upper/lowercase, number, and special character.
+- **Vehicle Year**: Must be between 2000 and current year.
+- **OTP**: Valid for 5 minutes, single-use, max 5 attempts.
+
+---
+
 ## Assumptions & Design
 
 - **OTP**: Console-based simulation (printed when generated).
@@ -64,16 +72,17 @@ A dealership management system built with **.NET 9 Web API**, using **Entity Fra
   - **Services** → JWT & OTP logic.
   - **DTOs** → Request/response contracts.
   - **EF Core** → Data persistence with SQLite.
+  - **Middleware** → Global error handling with consistent JSON responses.
 
 ---
 
-## ✨ Bonus Features
+## Bonus Features
 
 - ✅ Swagger/OpenAPI with JWT support
 - ✅ Logging with `ILogger<T>`
 - ✅ Input validation using DataAnnotations
 - ✅ Configuration via `appsettings.json`
-- 🐳 Docker-ready (`Dockerfile` included)
+- ✅ Global Error Handling Middleware
 
 ---
 
@@ -88,5 +97,3 @@ A dealership management system built with **.NET 9 Web API**, using **Entity Fra
 7. Request OTP for purchase → `POST /api/Otp/request`
 8. Submit purchase → `POST /api/Purchases/request`
 9. Admin processes purchase → `POST /api/Admin/process-sale/{id}`
-
----

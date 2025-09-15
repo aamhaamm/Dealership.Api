@@ -48,6 +48,10 @@ public class VehiclesController : ControllerBase
     [Authorize(Policy = "AdminOnly")]
     public async Task<ActionResult<VehicleResponse>> Add([FromBody] VehicleCreateRequest req)
     {
+        // Extra validation for Year (prevent adding future cars)
+        if (req.Year > DateTime.UtcNow.Year)
+            return BadRequest(new { code = "INVALID_YEAR", message = "Year cannot be in the future" });
+
         var vehicle = new Vehicle
         {
             Id = Guid.NewGuid(),
@@ -67,7 +71,7 @@ public class VehiclesController : ControllerBase
         _logger.LogInformation("Vehicle added: {Make} {Model} ({Year})", vehicle.Make, vehicle.Model, vehicle.Year);
 
         return new VehicleResponse(vehicle.Id, vehicle.Make, vehicle.Model, vehicle.Year,
-                                   vehicle.Price, vehicle.Color, vehicle.MileageKm, vehicle.IsAvailable);
+                                vehicle.Price, vehicle.Color, vehicle.MileageKm, vehicle.IsAvailable);
     }
 
     [HttpPut("update")]

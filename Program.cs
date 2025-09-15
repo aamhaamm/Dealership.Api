@@ -1,5 +1,6 @@
 using Dealership.Api.Data;
 using Dealership.Api.Services;
+using Dealership.Api.Middleware; 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -100,6 +101,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// Global Error Handling Middleware (must be before HTTPS redirection)
+app.UseMiddleware<ErrorHandlingMiddleware>();
 
 app.UseHttpsRedirection();
 
