@@ -16,7 +16,7 @@ A simple dealership management system built with **.NET 9 Web API**, using **Ent
    dotnet run
    ```
 5. The API will be available at:
-   - Swagger UI → `https://localhost:7118/swagger`
+   - Swagger UI → `http://localhost:5118/swagger/index.html`
 
 ---
 
