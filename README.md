@@ -28,7 +28,7 @@ A simple dealership management system built with **.NET 9 Web API**, using **Ent
 - `POST /api/Auth/register` → Register new customer (OTP required).
 - `POST /api/Auth/login` → Login (OTP required, returns JWT).
 
-### 👨Admin Use Cases
+### Admin Use Cases
 
 - `POST /api/Vehicles/add` → Add new vehicle (Admin only).
 - `PUT /api/Vehicles/update` → Update vehicle details (Admin + OTP).
@@ -43,7 +43,7 @@ A simple dealership management system built with **.NET 9 Web API**, using **Ent
 
 ---
 
-## ⚙️ Assumptions & Design Decisions
+## Assumptions & Design Decisions
 
 - **OTP Simulation**: OTPs are printed in the console instead of sending SMS/Email.
 - **Roles**:
